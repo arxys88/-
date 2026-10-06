@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桌面破壞神 - 邊際兌換矩陣與換裝對沖工具 (官方流程對齊版)</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #181a22;
+    --border: #292e3b;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --gold: #f59e0b;
+    --blue: #38bdf8;
+    --green: #10b981;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 20px 14px;
+    display: flex;
+    justify-content: center;
+  }
+  .container {
+    max-width: 1000px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  h1 { font-size: 1.35rem; color: var(--gold); text-align: center; }
+
+  .formula-banner {
+    background: #141721;
+    border-left: 4px solid var(--gold);
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    border-radius: 4px;
+  }
+  .formula-banner strong { color: #f1f5f9; }
+  .formula-highlight { color: var(--cyan); font-weight: bold; }
+  .formula-cond { color: #f87171; font-weight: bold; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--blue);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .bracket-pill {
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  
+  .grid-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .input-item { display: flex; flex-direction: column; gap: 3px; }
+  .input-item label { font-size: 0.75rem; color: var(--text-muted); }
+  .input-item label .sub { color: var(--gold); font-size: 0.7rem; }
+  .input-item.bracket-group {
+    background: rgba(6, 182, 212, 0.04);
+    border: 1px dashed rgba(6, 182, 212, 0.3);
+    padding: 6px;
+    border-radius: 6px;
+  }
+  .input-item.cond-group {
+    background: rgba(239, 68, 68, 0.04);
+    border: 1px dashed rgba(239, 68, 68, 0.3);
+    padding: 6px;
+    border-radius: 6px;
+  }
+  .input-item.crit-group {
+    background: rgba(168, 85, 247, 0.04);
+    border: 1px dashed rgba(168, 85, 247, 0.3);
+    padding: 6px;
+    border-radius: 6px;
+  }
+  input[type="number"], select {
+    background: #0f1115;
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    outline: none;
+  }
+  input[type="number"]:focus, select:focus { border-color: var(--gold); }
+
+  .quick-converter {
+    background: #12151e;
+    border: 1px solid #3b82f6;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .qc-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .qc-title { font-size: 0.8rem; font-weight: bold; color: var(--blue); width: 100%; margin-bottom: 2px; }
+  .qc-res { font-size: 1.1rem; font-weight: bold; color: var(--green); }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-top: 6px;
+  }
+  .matrix-table th, .matrix-table td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .matrix-table th { color: var(--text-muted); font-size: 0.75rem; background: #13151c; }
+  .tag-src { font-weight: bold; color: var(--gold); display: block; font-size: 0.85rem; }
+  .tag-src-sub { font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
+  .equiv-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 6px 12px;
+  }
+  .equiv-item {
+    background: #11131a;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border-left: 2px solid var(--green);
+    display: flex;
+    justify-content: space-between;
+  }
+  .equiv-name { color: var(--text-muted); }
+  .equiv-val { color: var(--green); font-weight: 600; }
+
+  .sim-banner {
+    background: linear-gradient(135deg, #1c2230, #13151c);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    text-align: center;
+  }
+  .sim-val { font-size: 1.3rem; font-weight: bold; }
+  .sim-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .sim-item {
+    background: #11131a;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sim-item span { font-size: 0.75rem; color: var(--text-muted); }
+  .badge-res {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  .res-up { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--green); color: var(--green); }
+  .res-down { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); color: var(--red); }
+  .res-even { background: rgba(148, 163, 184, 0.15); border: 1px solid var(--text-muted); color: var(--text-muted); }
+  .note { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>桌面破壞神 - 邊際兌換矩陣與換裝對沖工具 (官方流程對齊版)</h1>
+
+  <div class="formula-banner">
+    <strong>官方遊戲傷害底層流程：</strong><br>
+    Base × <span class="formula-highlight">[1 + 閃電% + 全傷%]</span> × [1 + 暴率% × 暴傷% × (1 - 目標暴傷減免%)] × <span class="formula-cond">[1 + 生效條件傷總和(Damage vs)%]</span> × [1 + 強力傷%] × 浮動(1.0)<br>
+    🔍 <strong>機制更新：</strong>已納入官方「<strong>目標暴擊傷害減免</strong>」影響因子，條件傷對齊「<strong>生效條件傷之總和</strong>」。
+  </div>
+
+  <!-- 1. 當前面板基準 -->
+  <div class="card">
+    <div class="card-title">
+      <span>1. 當前機體進攻面板基準（自動保存）</span>
+      <div id="bracket_status" class="bracket-pill">閃電+全傷合計: 375.3% (4.753x)</div>
+    </div>
+    <div class="grid-inputs">
+      <div class="input-item">
+        <label>基礎點傷 (武器+點傷)</label>
+        <input type="number" id="base_dmg" value="476" oninput="recalc()">
+      </div>
+      <div class="input-item">
+        <label>智力主屬 <span class="sub">(面板已含轉化值)</span></label>
+        <input type="number" id="main_stat" value="881" oninput="recalc()">
+      </div>
+      <div class="input-item">
+        <label>暴擊機率 (%) <span class="sub">(上限85%)</span></label>
+        <input type="number" id="crit_rate" value="85" max="85" oninput="recalc()">
+      </div>
+      <div class="input-item">
+        <label>暴擊傷害 (%)</label>
+        <input type="number" id="crit_dmg" value="376.1" step="0.1" oninput="recalc()">
+      </div>
+
+      <!-- 目標暴傷減免 -->
+      <div class="input-item crit-group">
+        <label style="color:var(--purple); font-weight:600;">🛡️ 目標暴傷減免 (%) <span class="sub">(木樁填0)</span></label>
+        <input type="number" id="target_cdr" value="0" min="0" max="90" step="1" oninput="recalc()">
+      </div>
+
+      <div class="input-item bracket-group">
+        <label style="color:var(--cyan); font-weight:600;">⚡ 閃電傷害 (%) <span class="sub">(屬性傷)</span></label>
+        <input type="number" id="elem_dmg" value="317.6" step="0.1" oninput="recalc()">
+      </div>
+      <div class="input-item bracket-group">
+        <label style="color:var(--cyan); font-weight:600;">🌐 全傷害加成 (%) <span class="sub">(同乘區加算)</span></label>
+        <input type="number" id="all_dmg" value="57.7" step="0.1" oninput="recalc()">
+      </div>
+
+      <div class="input-item">
+        <label>強力攻擊傷害 (%) <span class="sub">(類型傷)</span></label>
+        <input type="number" id="type_dmg" value="212.4" step="0.1" oninput="recalc()">
+      </div>
+      
+      <!-- 條件傷總和 -->
+      <div class="input-item cond-group">
+        <label style="color:#f87171; font-weight:600;">🎯 條件傷總和 (Damage vs)% <span class="sub">(健康+精英)</span></label>
+        <input type="number" id="cond_dmg" value="198.6" step="0.1" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 全屬性無遺漏速查矩陣 -->
+  <div class="card">
+    <div class="card-title">
+      <span>2. 全屬性動態邊際兌換矩陣（即時連動目標暴傷減免與條件底數）</span>
+    </div>
+
+    <div class="quick-converter">
+      <div class="qc-title">🔍 任意兩屬性 1 對 1 精確自選換算</div>
+      <div class="qc-group">
+        <span>如果新裝備獲得了</span>
+        <input type="number" id="qc_val" value="100" style="width:90px;" oninput="runQuickConvert()">
+        <select id="qc_from" onchange="runQuickConvert()">
+          <option value="type">強力攻擊傷害 (%)</option>
+          <option value="cond">條件傷 (Damage vs) (%)</option>
+          <option value="cd">暴擊傷害 (%)</option>
+          <option value="elem">閃電傷害 / 全傷害 (%)</option>
+          <option value="main">智力主屬 (點數)</option>
+          <option value="mana">最大魔力 (點數)</option>
+          <option value="base">基礎點傷 (點數)</option>
+        </select>
+      </div>
+      <div class="qc-group">
+        <span>剛好可以抵銷舊裝備失去的：</span>
+        <select id="qc_to" onchange="runQuickConvert()">
+          <option value="cond">條件傷 (Damage vs) (%)</option>
+          <option value="type">強力攻擊傷害 (%)</option>
+          <option value="cd" selected>暴擊傷害 (%)</option>
+          <option value="elem">閃電傷害 / 全傷害 (%)</option>
+          <option value="main">智力主屬 (點數)</option>
+          <option value="mana">最大魔力 (點數)</option>
+          <option value="base">基礎點傷 (點數)</option>
+        </select>
+        <span class="qc-res" id="qc_result">- 158.0%</span>
+      </div>
+    </div>
+
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th style="width: 25%;">當新裝備獲得此標準數值時...</th>
+          <th>等價於可以抵銷其他所有屬性的數值（每行完整對應所有其他 6 屬性）</th>
+        </tr>
+      </thead>
+      <tbody id="matrix_body"></tbody>
+    </table>
+  </div>
+
+  <!-- 3. 實戰換裝加減對沖模擬器 -->
+  <div class="card">
+    <div class="card-title">
+      <span>3. 實戰換裝加減模擬器</span>
+      <button onclick="clearSim()" style="background:#262a36; border:1px solid var(--border); color:#fff; font-size:0.7rem; padding:3px 8px; border-radius:3px; cursor:pointer;">清空數值</button>
+    </div>
+
+    <div class="sim-banner">
+      <div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:2px;">更換裝備後的實質淨收益</div>
+        <div id="sim_result_pct" class="sim-val" style="color:var(--text-muted);">+0.00%</div>
+      </div>
+      <div id="sim_badge" class="badge-res res-even">無變化</div>
+    </div>
+
+    <div class="sim-grid">
+      <div class="sim-item">
+        <span>強力攻擊傷害變化 (%)</span>
+        <input type="number" id="delta_type" value="100" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item" style="border-color: rgba(239, 68, 68, 0.4);">
+        <span style="color:#f87171;">🎯 條件傷總和變化 (%)</span>
+        <input type="number" id="delta_cond" value="0" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item">
+        <span>暴擊傷害變化 (%)</span>
+        <input type="number" id="delta_cd" value="0" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item" style="border-color: rgba(6, 182, 212, 0.4);">
+        <span style="color:var(--cyan);">⚡ 閃電傷害變化 (%)</span>
+        <input type="number" id="delta_elem" value="0" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item" style="border-color: rgba(6, 182, 212, 0.4);">
+        <span style="color:var(--cyan);">🌐 全傷害加成變化 (%)</span>
+        <input type="number" id="delta_all" value="0" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item" style="border-color:#3b82f6;">
+        <span style="color:#60a5fa;">💧 最大魔力變化 (40%轉智力)</span>
+        <input type="number" id="delta_mana" value="-80" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item">
+        <span>純智力主屬變化 (點數)</span>
+        <input type="number" id="delta_main" value="0" step="1" oninput="runSim()">
+      </div>
+      <div class="sim-item">
+        <span>暴擊機率變化 (%) (上限85%)</span>
+        <input type="number" id="delta_cr" value="0" step="0.5" oninput="runSim()">
+      </div>
+      <div class="sim-item">
+        <span>基礎點傷變化 (武器+點傷)</span>
+        <input type="number" id="delta_base" value="0" step="1" oninput="runSim()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'desktop_dps_tradeoff_user_stats_v6';
+
+let currentCosts = {};
+
+function getV(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function saveStats() {
+  const ids = ['base_dmg', 'main_stat', 'crit_rate', 'crit_dmg', 'target_cdr', 'elem_dmg', 'all_dmg', 'type_dmg', 'cond_dmg'];
+  const obj = {};
+  ids.forEach(id => obj[id] = getV(id));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+}
+
+function loadStats() {
+  const str = localStorage.getItem(STORAGE_KEY);
+  if (str) {
+    try {
+      const obj = JSON.parse(str);
+      for (let k in obj) {
+        if (document.getElementById(k)) document.getElementById(k).value = obj[k];
+      }
+    } catch(e) {}
+  }
+}
+
+function recalc() {
+  saveStats();
+
+  const base = getV('base_dmg');
+  const main = getV('main_stat');
+  const cr = Math.min(Math.max(getV('crit_rate') / 100, 0), 0.85); // 85% 封頂
+  const cd = getV('crit_dmg') / 100;
+  const target_cdr = Math.min(Math.max(getV('target_cdr') / 100, 0), 0.99); // 目標暴傷減免
+  
+  const elem_val = getV('elem_dmg');
+  const all_val = getV('all_dmg');
+  const total_elem_all_pct = elem_val + all_val;
+  const elem = total_elem_all_pct / 100;
+  
+  const type = getV('type_dmg') / 100;
+  const cond = getV('cond_dmg') / 100;
+
+  // 乘區倍率底數 (嚴格依照官方公式)
+  const effective_cd = cd * (1 - target_cdr);
+  const m_base = base;
+  const m_main = 1 + main * 0.01;
+  const m_crit = 1 + cr * effective_cd;
+  const m_elem = 1 + elem;
+  const m_type = 1 + type;
+  const m_cond = 1 + cond;
+
+  document.getElementById('bracket_status').innerText = 
+    `⚡ 閃電+全傷合計: ${total_elem_all_pct.toFixed(1)}% (${m_elem.toFixed(3)}x)`;
+
+  // 提升 1% 總傷所需數值 (邊際成本)
+  const eff_cr_factor = cr * (1 - target_cdr);
+  currentCosts = {
+    type: m_type * 0.01 * 100, // %
+    cond: m_cond * 0.01 * 100, // %
+    cd: eff_cr_factor > 0 ? (m_crit * 0.01 / eff_cr_factor) * 100 : Infinity, // % (受目標CDR影響)
+    elem: m_elem * 0.01 * 100, // %
+    main: m_main * 0.01 * 100, // 點智力
+    mana: (m_main * 0.01 * 100) / 0.4, // 點魔力
+    base: m_base * 0.01 // 點基礎傷
+  };
+
+  renderMatrix();
+  runQuickConvert();
+  runSim();
+}
+
+const statDefs = [
+  { key: 'type', name: '強力傷害', unit: '%', defaultVal: 100, title: '強力攻擊傷害 (+100%)', sub: '類型傷乘區' },
+  { key: 'cond', name: '條件傷總和', unit: '%', defaultVal: 160, title: '條件傷總和 (+160%)', sub: 'Damage vs 乘區' },
+  { key: 'cd', name: '暴擊傷害', unit: '%', defaultVal: 100, title: '暴擊傷害 (+100%)', sub: '受目標暴傷減免折算' },
+  { key: 'elem', name: '閃電/全傷', unit: '%', defaultVal: 130, title: '閃電傷害 / 全傷 (+130%)', sub: '屬性全傷乘區' },
+  { key: 'main', name: '智力主屬', unit: '點', defaultVal: 75, title: '智力主屬 (+75 點)', sub: '主屬性乘區' },
+  { key: 'mana', name: '最大魔力', unit: '點', defaultVal: 80, title: '最大魔力 (+80 點)', sub: '天賦折算 32 智力' },
+  { key: 'base', name: '基礎點傷', unit: '點', defaultVal: 50, title: '基礎點傷 (+50 點)', sub: '武器白值+附加傷' }
+];
+
+function renderMatrix() {
+  const tbody = document.getElementById('matrix_body');
+  tbody.innerHTML = statDefs.map(src => {
+    const otherStats = statDefs.filter(t => t.key !== src.key);
+    
+    const equivsHtml = otherStats.map(target => {
+      const equivVal = src.defaultVal * (currentCosts[target.key] / currentCosts[src.key]);
+      let formattedVal = equivVal >= 100 ? equivVal.toFixed(0) : equivVal.toFixed(1);
+      return `
+        <div class="equiv-item">
+          <span class="equiv-name">${target.name}</span>
+          <span class="equiv-val">-${formattedVal} ${target.unit}</span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <tr>
+        <td>
+          <span class="tag-src">${src.title}</span>
+          <span class="tag-src-sub">${src.sub}</span>
+        </td>
+        <td>
+          <div class="equiv-container">
+            ${equivsHtml}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function runQuickConvert() {
+  const fromKey = document.getElementById('qc_from').value;
+  const toKey = document.getElementById('qc_to').value;
+  const val = parseFloat(document.getElementById('qc_val').value) || 0;
+  const targetUnit = statDefs.find(s => s.key === toKey).unit;
+
+  if (fromKey === toKey) {
+    document.getElementById('qc_result').innerText = `- ${val.toFixed(1)} ${targetUnit}`;
+    return;
+  }
+
+  const equivVal = val * (currentCosts[toKey] / currentCosts[fromKey]);
+  const formatted = equivVal >= 100 ? equivVal.toFixed(0) : equivVal.toFixed(1);
+  document.getElementById('qc_result').innerText = `- ${formatted} ${targetUnit}`;
+}
+
+function runSim() {
+  const base = getV('base_dmg');
+  const main = getV('main_stat');
+  const cr = Math.min(Math.max(getV('crit_rate') / 100, 0), 0.85);
+  const cd = getV('crit_dmg') / 100;
+  const target_cdr = Math.min(Math.max(getV('target_cdr') / 100, 0), 0.99);
+  
+  const elem_base = (getV('elem_dmg') + getV('all_dmg')) / 100;
+  const type = getV('type_dmg') / 100;
+  const cond = getV('cond_dmg') / 100;
+
+  // 原始乘區積
+  const eff_cd_0 = cd * (1 - target_cdr);
+  const m_base_0 = base;
+  const m_main_0 = 1 + main * 0.01;
+  const m_crit_0 = 1 + cr * eff_cd_0;
+  const m_elem_0 = 1 + elem_base;
+  const m_type_0 = 1 + type;
+  const m_cond_0 = 1 + cond;
+
+  // 變化量
+  const d_base = getV('delta_base');
+  const d_mana = getV('delta_mana');
+  const d_main = getV('delta_main') + (d_mana * 0.4);
+  const d_cr = getV('delta_cr') / 100;
+  const d_cd = getV('delta_cd') / 100;
+  
+  const d_elem_total = (getV('delta_elem') + getV('delta_all')) / 100;
+  const d_type = getV('delta_type') / 100;
+  const d_cond = getV('delta_cond') / 100;
+
+  const new_cr = Math.min(Math.max(cr + d_cr, 0), 0.85);
+  const new_cd = Math.max(cd + d_cd, 0);
+  const eff_cd_1 = new_cd * (1 - target_cdr);
+
+  const m_base_1 = Math.max(base + d_base, 1);
+  const m_main_1 = Math.max(1 + (main + d_main) * 0.01, 1);
+  const m_crit_1 = 1 + new_cr * eff_cd_1;
+  const m_elem_1 = Math.max(1 + elem_base + d_elem_total, 1);
+  const m_type_1 = Math.max(1 + type + d_type, 1);
+  const m_cond_1 = Math.max(1 + cond + d_cond, 1);
+
+  const factor = (m_base_1 / m_base_0) *
+                 (m_main_1 / m_main_0) *
+                 (m_crit_1 / m_crit_0) *
+                 (m_elem_1 / m_elem_0) *
+                 (m_type_1 / m_type_0) *
+                 (m_cond_1 / m_cond_0);
+
+  const netPct = (factor - 1) * 100;
+
+  const resEl = document.getElementById('sim_result_pct');
+  const badgeEl = document.getElementById('sim_badge');
+
+  if (Math.abs(netPct) < 0.01) {
+    resEl.style.color = 'var(--text-muted)';
+    resEl.innerText = '0.00%';
+    badgeEl.className = 'badge-res res-even';
+    badgeEl.innerText = '持平 (收益無變化)';
+  } else if (netPct > 0) {
+    resEl.style.color = 'var(--green)';
+    resEl.innerText = `+${netPct.toFixed(2)}%`;
+    badgeEl.className = 'badge-res res-up';
+    badgeEl.innerText = `🟢 值得更換 (淨賺 +${netPct.toFixed(2)}%)`;
+  } else {
+    resEl.style.color = 'var(--red)';
+    resEl.innerText = `${netPct.toFixed(2)}%`;
+    badgeEl.className = 'badge-res res-down';
+    badgeEl.innerText = `🔴 不建議更換 (虧損 ${netPct.toFixed(2)}%)`;
+  }
+}
+
+function clearSim() {
+  ['delta_type', 'delta_cd', 'delta_cond', 'delta_elem', 'delta_all', 'delta_mana', 'delta_main', 'delta_cr', 'delta_base'].forEach(id => {
+    document.getElementById(id).value = 0;
+  });
+  runSim();
+}
+
+window.onload = () => {
+  loadStats();
+  recalc();
+};
+</script>
+
+</body>
+</html>
